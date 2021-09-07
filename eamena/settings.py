@@ -161,6 +161,7 @@ LOGGING = {
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 #MEDIA_ROOT =  os.path.join(APP_ROOT)
 MEDIA_ROOT = MEDIA_URL
+#MEDIA_ROOT = os.path.join(APP_ROOT, 'media')
 
 # Sets default max upload size to 15MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
@@ -207,14 +208,9 @@ if DEBUG is True:
     SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
 
 
-CELERY_BROKER_URL = 'amqp://archesdev:archesdev@127.0.0.1/archesdev'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = 'django-db' # Use 'django-cache' if you want to use your cache as your backend
 CELERY_TASK_SERIALIZER = 'json'
-#CELERY_BROKER_URL = 'amqp://guest:guest@localhost'
-#CELERY_ACCEPT_CONTENT = ['json']
-#CELERY_RESULT_BACKEND = 'django-db' # Use 'django-cache' if you want to use your cache as your backend
-#CELERY_TASK_SERIALIZER = 'json'
 
 
 CELERY_SEARCH_EXPORT_EXPIRES = 24 * 3600  # seconds
@@ -225,7 +221,7 @@ CELERY_BEAT_SCHEDULE = {
     "notification": {"task": "arches.app.tasks.message", "schedule": CELERY_SEARCH_EXPORT_CHECK, "args": ("Celery Beat is Running",),},
 }
 
-SEARCH_EXPORT_IMMEDIATE_DOWNLOAD_THRESHOLD = 2000  # The maximum number of instances a user can download from search export 
+SEARCH_EXPORT_IMMEDIATE_DOWNLOAD_THRESHOLD = 2000  # The maximum number of instances a user can download from search export
 
 try:
     from .package_settings import *
