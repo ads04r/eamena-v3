@@ -252,9 +252,10 @@ class Command(BaseCommand):
 				"unflatten",
 				"prerequisites",
 				"annotate",
+				"summary",
 				"undo"
 			],
-			help="Operation Type; 'list_nodes'=Lists all the valid nodes in a graph.'convert'=Converts an XLSX bulk upload sheet into Arches JSON. 'validate'=Inspects an XLSX bulk upload sheet and lists errors. 'unflatten'=Dumps the intermediate data format, in the correct structure but without validating concepts.'prerequisites'=Returns an Arches JSON file containing all the prerequisite objects (grid ids, etc) that do not already exist in the database.'annotate'=Takes an Arches import file and outputs the same file but with extra properties (which are ignored by Arches) describing the field names and concepts, making the file much easier for a human to read.'undo'=Takes a generated Arches JSON business data file as an input, and deletes all UUIDs referenced within, effectively undoing a bulk upload."
+			help="Operation Type; 'list_nodes'=Lists all the valid nodes in a graph.'convert'=Converts an XLSX bulk upload sheet into Arches JSON. 'validate'=Inspects an XLSX bulk upload sheet and lists errors. 'unflatten'=Dumps the intermediate data format, in the correct structure but without validating concepts.'prerequisites'=Returns an Arches JSON file containing all the prerequisite objects (grid ids, etc) that do not already exist in the database.'annotate'=Takes an Arches import file and outputs the same file but with extra properties (which are ignored by Arches) describing the field names and concepts, making the file much easier for a human to read.'summary'=Returns a list of UUIDs of imported items, and their EAMENA IDs.'undo'=Takes a generated Arches JSON business data file as an input, and deletes all UUIDs referenced within, effectively undoing a bulk upload."
 		)
 
 		parser.add_argument(
@@ -304,6 +305,19 @@ class Command(BaseCommand):
 		if graphid in self.__graphcache:
 			return self.__graphcache[graphid]
 		return None
+
+	def __eamenaid_from_resourceinstance(self, resourceinstanceid):
+
+		eamena_tile_uuid = '34cfe992-c2c0-11ea-9026-02e7594ce0a0'
+
+		try:
+			tile = TileModel.objects.get(nodegroup__nodegroupid=eamena_tile_uuid, resourceinstance_id=str(resourceinstanceid))
+		except:
+			return ''
+		data = tile.data
+		if eamena_tile_uuid in data:
+			return data[eamena_tile_uuid]
+		return ''
 
 	def __resourceinstance_from_eamenaid(self, eamenaid, graphid, quick=False):
 
@@ -1025,6 +1039,35 @@ class Command(BaseCommand):
 						data['business_data']['resources'][r]['tiles'][t]['resourceinstance_name'] = resourceinstance_id_comment
 					if len(data_fields) > 0:
 						data['business_data']['resources'][r]['tiles'][t]['data_fields'] = data_fields
+
+		if options['operation'] == 'summary':
+
+			fn = options['source']
+			fp = open(fn, 'r')
+			data = json.loads('\n'.join(fp.readlines()))
+			fp.close()
+
+			if not('business_data' in data):
+				self.__error('', "Not a valid business data file.", str(fn))
+			else:
+				if not('resources' in data['business_data']):
+					self.__error('', "Not a valid business data file.", str(fn))
+
+			ret = []
+			if len(self.errors) == 0:
+
+				for item in data['business_data']['resources']:
+					if not('resourceinstance' in item):
+						continue
+					if not('resourceinstanceid' in item['resourceinstance']):
+						continue
+					id = str(item['resourceinstance']['resourceinstanceid'])
+					eid = self.__eamenaid_from_resourceinstance(id)
+					if len(eid) == 0:
+						continue
+					ret.append({"uuid": id, "eamenaid": eid})
+
+			data = ret
 
 		if options['operation'] == 'undo':
 
