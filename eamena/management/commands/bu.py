@@ -1,11 +1,12 @@
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import GEOSGeometry
 from django.http import HttpRequest
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from arches.app.models.models import GraphModel, Node, ResourceInstance, TileModel
 from arches.app.models.concept import Concept, get_preflabel_from_valueid, get_valueids_from_concept_label
 from arches.app.views import search
-
 from django.core.management.base import BaseCommand
+from django.contrib.gis.geos.error import GEOSException
 from eamena.bulk_uploader import HeritagePlaceBulkUploadSheet, GridSquareBulkUploadSheet
 from geomet import wkt
 import json, os, sys, logging, re, uuid, hashlib, datetime, warnings
@@ -189,6 +190,16 @@ class Command(BaseCommand):
 									if isinstance(tile['data'][key], (str)):
 										geojson_data = self.__geojson_from_wkt(tile['data'][key])
 										if isinstance(geojson_data, (dict)):
+											if 'features' in geojson_data:
+												for feature in geojson_data['features']:
+													if 'geometry' in feature:
+														try:
+															geom_collection = GEOSGeometry(json.dumps(feature['geometry']))
+														except GEOSException:
+															self.__error(passed_uid, "Invalid geometry.", "The geometry is syntactically correct, but the shape is not supported by Arches. Please simplify and try again.")
+													else:
+														self.__error(passed_uid, "Invalid geometry.", "FeatureCollection is missing a geometry.")
+
 											tile['data'][key] = geojson_data
 											tile['data'][key]['features'][0]['properties']['nodeId'] = str(key)
 										else:
