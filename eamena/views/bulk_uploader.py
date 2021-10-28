@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.middleware.csrf import get_token
 from arches.app.models.models import GraphModel
 
-import os, sys, json, uuid
+import os, sys, json, uuid, datetime
 
 def index(request):
 	return redirect('plugins/bulk-upload')
@@ -25,6 +25,8 @@ def handle_uploaded_file(f, upload_id, info={}):
 		for chunk in f.chunks():
 			destination.write(chunk)
 	with open(info_file, 'w') as fp:
+		if 'filepath' in info:
+			info['filepath'] = dest_path
 		fp.write(json.dumps(info))
 	return dest_file.replace(settings.BULK_UPLOAD_DIR, '')
 
@@ -55,7 +57,7 @@ def upload_spreadsheet(request):
 	if request.method != 'POST':
 		raise Http404()
 
-	upload_id = str(uuid.uuid4())
+	upload_id = str(datetime.datetime.now().strftime("%Y-%m-%d-")) + str(uuid.uuid4())
 	f = request._files['files[]']
 	fname = os.path.basename(str(f))
 	response_data = {
@@ -66,6 +68,8 @@ def upload_spreadsheet(request):
 		'user': {'id': request.user.id, 'name': request.user.get_username()},
 		'csrf': get_token(request)
 	}
+	if request.user.email:
+		response_data['user']['email'] = request.user.email
 	if not fname.endswith('.xlsx'):
 		response_data['filevalid'] = False
 	else:
