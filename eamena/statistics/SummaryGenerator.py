@@ -1,11 +1,40 @@
 from arches.app.models import models
+from arches.app.models.concept import Concept, get_preflabel_from_valueid, get_valueids_from_concept_label
 
 class SummaryGenerator:
 
 	def __init__(self):
 
-		self._properties = [] # ['5297fa9f-8e16-11ea-a6a6-02e7594ce0a0', 'ID'], ['34cfe992-c2c0-11ea-9026-02e7594ce0a0', 'ID'], ['5297faa9-8e16-11ea-a6a6-02e7594ce0a0', 'Actor'], ['d2e1ab96-cc05-11ea-a292-02e7594ce0a0', 'Role'], ['34cfea8a-c2c0-11ea-9026-02e7594ce0a0', 'Actor'], ['34cfea43-c2c0-11ea-9026-02e7594ce0a0', 'Country']]
+		self._properties = []
 		self._cached_summaries = {}
+
+	def find_concepts(self, nodeid):
+
+		ret = []
+		node = models.Node.objects.get(nodeid=nodeid)
+
+		if 'rdmCollection' in node.config:
+			conceptid = node.config['rdmCollection']
+			if not(conceptid is None):
+				for item in Concept().get_e55_domain(conceptid):
+					valueobj = get_preflabel_from_valueid(item['id'], 'en')
+					valueid = valueobj['id']
+					label = get_preflabel_from_valueid(valueid, 'en')
+					ret.append({'valueid': valueid, 'conceptid': item['conceptid'], 'label': label['value']})
+		return ret
+
+	def find_objects(self, graph_id, identifier_id):
+
+		ret = {}
+		for item in models.TileModel.objects.filter(resourceinstance__graph_id=graph_id, nodegroup_id=identifier_id):
+			id = str(item.resourceinstance_id)
+			value = {'id': id}
+			if item.data:
+				if isinstance(item.data, (dict)):
+					if identifier_id in item.data:
+						value['label'] = item.data[identifier_id]
+			ret[id] = value
+		return ret
 
 	def add_property(self, label, uuid):
 
