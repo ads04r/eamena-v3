@@ -53,7 +53,8 @@ class SummaryGenerator:
 			for tile in models.TileModel.objects.filter(data__icontains=k): # , nodegroup_id='34cfea2e-c2c0-11ea-9026-02e7594ce0a0'):
 				rid = str(tile.resourceinstance_id)
 				if not(rid in ret):
-					ret[rid] = {}
+					ri = models.ResourceInstance.objects.get(resourceinstanceid=rid)
+					ret[rid] = {'Date': ri.createdtime.strftime("%Y-%m-%d")}
 				data = tile.data[k]
 				if isinstance(data, (list)):
 					if len(data) == 0:

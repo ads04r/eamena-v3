@@ -19,6 +19,15 @@ def relations(graphid, role=None):
 		ret = models.ResourceInstance.objects.filter(graph_id=graphid, resxres_resource_instance_ids_to__resourceinstanceidfrom__tilemodel__data__icontains=role).distinct()
 	return ret
 
+def get_roles(sg):
+
+	nodeid = 'd2e1ab96-cc05-11ea-a292-02e7594ce0a0'
+	ret = {}
+	for item in sg.find_concepts(nodeid):
+		id = item['valueid']
+		ret[id] = item
+	return ret
+
 def get_countries(sg):
 
 	nodeid = '34cfea43-c2c0-11ea-9026-02e7594ce0a0'
@@ -47,6 +56,7 @@ def get_summaries():
 	grids = get_grid_squares(gen)
 	people = get_people(gen)
 	country_lookup = get_countries(gen)
+	role_lookup = get_roles(gen)
 
 	properties = [
 		['5297fa9f-8e16-11ea-a6a6-02e7594ce0a0', 'ID'],
@@ -72,15 +82,19 @@ def get_summaries():
 		if 'Grid' in item:
 			if item['Grid'] in grids:
 				id = item['Grid']
-				item['Grid'] = grids[id]['label']
+				item['Grid'] = {"id": id, "label": grids[id]['label']}
 		if 'Actor' in item:
 			if item['Actor'] in people:
 				id = item['Actor']
-				item['Actor'] = people[id]['label']
+				item['Actor'] = {"id":id, "label": people[id]['label']}
 		if 'Country' in item:
 			if item['Country'] in country_lookup:
 				id = item['Country']
-				item['Country'] = country_lookup[id]['label']
+				item['Country'] = {"id": id, "label": country_lookup[id]['label']}
+		if 'Role' in item:
+			if item['Role'] in role_lookup:
+				id = item['Role']
+				item['Role'] = {"id": id, "label": role_lookup[id]['label']}
 		ret[kk] = item
 	return ret
 
