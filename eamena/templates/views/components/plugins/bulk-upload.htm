@@ -1,6 +1,9 @@
 {% load i18n %}
 
 {% block content %}
+
+<div style="width: 100%; height: 100%; max-height: 100vh; box-sizing: border-box; overflow-y: scroll;">
+
 <div class="block-description arches-secondary-header" style="padding-top:20px;">
     <div class="container content padding-top-0">
 
@@ -47,13 +50,6 @@
 						<option value="5297fa9e-8e16-11ea-a6a6-02e7594ce0a0" disabled="">Geoarchaeology</option>
 					</select>
 				</div>
-				<div class="form-group">
-					<input type="checkbox" class="form-check-input" id="append" name="append"/>
-					<label for="append">Append</label>
-				</div>
-				<p>Append allows you to add data to existing records, but they must be identified in the spreadsheet by ensuring the appropriate EAMENA number is used for the UNIQUEID.</p>
-				<p>If you simply want to upload new data, do not select 'Append'.</p>
-				<p>This applies to an entire bulk upload sheet - if you have new data and data to append, please split them into two spreadsheets.</p>
 			</div>
 		</div>
 
@@ -90,6 +86,9 @@
 
     </div>
 </div>
+
+</div>
+
 {% endblock %}
 
 

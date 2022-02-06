@@ -5,11 +5,28 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.core.management import call_command
 from django.middleware.csrf import get_token
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from arches.app.models.models import GraphModel
+from eamena.tasks import import_processed_bulk_upload_and_notify
 
 import os, sys, json, uuid, datetime
+import arches.app.utils.task_management as task_management
+
+def __user_canbulkupload(user):
+
+	ret = user.user_permissions.filter(codename='add_resourceinstance').count() + user.groups.filter(permissions__codename='add_resourceinstance').count()
+	if ret == 0:
+		return False
+	return True
 
 def index(request):
+
+	if not(request.user.is_authenticated):
+		raise PermissionDenied
+
+	if not(__user_canbulkupload(request.user)):
+		raise PermissionDenied
+
 	return redirect('plugins/bulk-upload')
 
 def handle_uploaded_file(f, upload_id, info={}):
@@ -18,9 +35,11 @@ def handle_uploaded_file(f, upload_id, info={}):
 	info_file = os.path.join(settings.BULK_UPLOAD_DIR, upload_id, 'info.json')
 	errors_path = os.path.join(dest_path, 'error_reports')
 	imports_path = os.path.join(dest_path, 'for_import')
+	summary_path = os.path.join(dest_path, 'summary')
 	os.makedirs(dest_path)
 	os.makedirs(errors_path)
 	os.makedirs(imports_path)
+	os.makedirs(summary_path)
 	with open(dest_file, 'wb+') as destination:
 		for chunk in f.chunks():
 			destination.write(chunk)
@@ -37,6 +56,13 @@ def get_archesfile_path(filepath):
 	return dest_path
 
 def download_template(request, graphid):
+
+	if not(request.user.is_authenticated):
+		raise PermissionDenied
+
+	if not(__user_canbulkupload(request.user)):
+		raise PermissionDenied
+
 	try:
 		g = GraphModel.objects.get(graphid=str(graphid))
 	except:
@@ -56,6 +82,12 @@ def upload_spreadsheet(request):
 
 	if request.method != 'POST':
 		raise Http404()
+
+	if not(request.user.is_authenticated):
+		raise PermissionDenied
+
+	if not(__user_canbulkupload(request.user)):
+		raise PermissionDenied
 
 	upload_id = str(datetime.datetime.now().strftime("%Y-%m-%d-")) + str(uuid.uuid4())
 	f = request._files['files[]']
@@ -83,6 +115,12 @@ def validate(request):
 
 	if request.method != 'POST':
 		raise Http404()
+
+	if not(request.user.is_authenticated):
+		raise PermissionDenied
+
+	if not(__user_canbulkupload(request.user)):
+		raise PermissionDenied
 
 	upload_id = str(request.POST.get('uploadid', ''))
 	graph_id = str(request.POST.get('graphid', ''))
@@ -119,6 +157,12 @@ def convert(request):
 	if request.method != 'POST':
 		raise Http404()
 
+	if not(request.user.is_authenticated):
+		raise PermissionDenied
+
+	if not(__user_canbulkupload(request.user)):
+		raise PermissionDenied
+
 	upload_id = str(request.POST.get('uploadid', ''))
 	graph_id = str(request.POST.get('graphid', ''))
 	filepath = os.path.join(settings.BULK_UPLOAD_DIR, upload_id)
@@ -149,6 +193,13 @@ def convert(request):
 		response_data['success'] = True
 	except:
 		response_data['errors'].append(['', 'Failed to validate file ' + str(importfile.name), 'Please check that you are uploading a valid Excel spreadsheet, formatted according to the appropriate Bulk Upload Sheet template.'])
+
+	if response_data['success']:
+		email = None
+		if 'user' in info:
+			if 'email' in info['user']:
+				email = info['user']['email']
+		import_processed_bulk_upload_and_notify.delay(notify_address=email, upload_path=filepath)
 
 	return HttpResponse(json.dumps(response_data), content_type="application/json")
 
