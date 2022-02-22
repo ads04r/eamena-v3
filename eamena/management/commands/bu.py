@@ -32,9 +32,15 @@ def parse_date(datestring):
 	if ((v2 < 1) | (v2 > 12)):
 		return None
 	if v1 > 100: # y-m-d
-		return datetime.datetime(v1, v2, v3)
+		try:
+			return datetime.datetime(v1, v2, v3)
+		except:
+			return None
 	if v3 > 100: # d-m-y
-		return datetime.datetime(v3, v2, v1)
+		try:
+			return datetime.datetime(v3, v2, v1)
+		except:
+			return None
 	return None
 
 class Command(BaseCommand):
