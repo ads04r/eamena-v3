@@ -8,6 +8,8 @@ from arches.app.views import search
 from django.core.management.base import BaseCommand
 from django.contrib.gis.geos.error import GEOSException
 from eamena.bulk_uploader import HeritagePlaceBulkUploadSheet, GridSquareBulkUploadSheet
+from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError, NotFoundError
 from geomet import wkt
 import json, os, sys, logging, re, uuid, hashlib, datetime, warnings
 
@@ -404,12 +406,35 @@ class Command(BaseCommand):
 
 		return ret
 
-	def __test_geojson(self, gj):
+
+	def __make_temp_index(self, es, index):
+		ret = str(uuid.uuid4())
+		try:
+			es.get(index=index, id=ret)
+			ret = self.__make_temp_uuid() # Keep iterating until we get one that errors
+		except NotFoundError:
+			pass
+		return ret
+
+	def __test_geojson_es(self, gj):
+		if not(self.__test_geojson_recurse(gj)):
+			return False
+		es = Elasticsearch(hosts=['localhost:9200'])
+		id = self.__make_temp_index(es, 'eamena_resources')
+		doc = {'resourceinstanceid': id, 'geometries': [{'geom': gj}]}
+		try:
+			es.index(index='eamena_resources', doc_type='_doc', body=doc, id=id)
+		except RequestError:
+			return False
+		es.delete(index='eamena_resources', id=id)
+		return True
+
+	def __test_geojson_recurse(self, gj):
 		if isinstance(gj, (dict)):
 			ret = True
 			for keyo in gj.keys():
 				key = str(keyo)
-				ret = ret & (self.__test_geojson(gj[key]))
+				ret = ret & (self.__test_geojson_recurse(gj[key]))
 			return ret
 		elif isinstance(gj, (list)):
 			floats = 0
@@ -433,7 +458,7 @@ class Command(BaseCommand):
 				last_coords = itemser
 			ret = True
 			for item in gj:
-				ret = ret & (self.__test_geojson(item))
+				ret = ret & (self.__test_geojson_recurse(item))
 			return ret
 		else:
 			return True
@@ -452,8 +477,12 @@ class Command(BaseCommand):
 		if len(geom) == 0:
 			return text
 		else:
-			if self.__test_geojson(geom):
-				return {"type": "FeatureCollection", "features": [{ "type": "Feature", "properties": {"nodeId": None}, "geometry": geom }]}
+			if self.__test_geojson_recurse(geom):
+				geom = {"type": "FeatureCollection", "features": [{ "type": "Feature", "properties": {"nodeId": None}, "geometry": geom }]}
+				if self.__test_geojson_es(geom):
+					return geom
+				else:
+					return text
 			else:
 				return text
 
