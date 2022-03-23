@@ -69,6 +69,11 @@ define([
         }
 
         this.dirty = function(arg)
+        {
+            return this.isformdirty(arg);
+        }
+
+        this.isformdirty = function(arg)
 	{
             var index = arg();
             var valueindex = self.uimapping[index];
@@ -97,7 +102,15 @@ define([
             var index = arg();
             var valueindex = self.uimapping[index];
             var savevalues = []
-            var atile = this.card.tiles()[0];
+            var alltiles = this.card.tiles();
+            var atile = null;
+            if(alltiles.length > 0)
+            {
+               for(i = 0; i < alltiles.length; i++)
+               {
+                   if(alltiles[i].selected()) { atile = alltiles[i]; }
+               }
+            }
 
             for(i = 0; i < valueindex.length; i++)
             {
@@ -120,6 +133,7 @@ define([
                     for(i = 0; i < keys.length; i++)
                     {
                         if(keys[i].startsWith('_')) { continue; }
+                        if(savevalue == '') { value_id++; continue; }
                         if(typeof newtile.data[keys[i]] === "function")
                         {
                             newtile.data[keys[i]](savevalue); // If this is an observable already, it'll be a function
@@ -135,7 +149,7 @@ define([
 		});
             } else {
                 // This code block runs if there is a node, and we are just adding a value to it
-                var newcard = this.card.tiles()[0].cards[index];
+                var newcard = atile.cards[index];
                 var newtile = newcard.getNewTile();
                 var keys = Object.keys(newtile.data);
                 var value_id = 0;
@@ -143,6 +157,7 @@ define([
                 for(i = 0; i < keys.length; i++)
                 {
                     if(keys[i].startsWith('_')) { continue; }
+                    if(savevalue == '') { value_id++; continue; }
                     if(typeof newtile.data[keys[i]] === "function")
                     {
                         newtile.data[keys[i]](savevalue); // If this is an observable already, it'll be a function
