@@ -185,6 +185,8 @@ The data-spy and data-target are part of the built-in Bootstrap scrollspy functi
                     <div style="position: absolute; top: 59px; right: 15px;">
 <!--                            <ul class="nav navbar-nav navbar-right" style="padding: 10px 10px 10px 100px"> -->
                                <!-- <li class="pull-right" style="padding: 0px 10px 0px 0px"> -->
+                        <span style="padding-right: 20px"> 
+                            <a class="white" href="https://eamena.org/open-access-policy" target="_blank">{% trans "Please read our Open Access Policy before using the database" %}</a></span>
                     {% if user.username != 'anonymous' %}
                         <span style="padding-right: 20px"> 
                             <a class="white" href="{% url 'search_home' %}" target="_blank">{% trans "Search the EAMENA Database" %}</a></span>
