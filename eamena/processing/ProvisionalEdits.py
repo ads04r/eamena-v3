@@ -34,7 +34,8 @@ def apply_provisional_edits(tile, overwrite=False, username=None):
 		if not('action' in changes):
 			continue
 		if changes['action'] != 'create':
-			continue
+			if not(overwrite & (changes['action'] == 'update')):
+				continue
 		for id_uuid in changes['value'].keys():
 			id = str(id_uuid)
 			if id in data:
