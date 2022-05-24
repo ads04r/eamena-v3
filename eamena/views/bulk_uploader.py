@@ -22,10 +22,10 @@ def __user_canbulkupload(user):
 def index(request):
 
 	if not(request.user.is_authenticated):
-		raise PermissionDenied
+		return redirect('/auth/?next=/bulk-upload')
 
 	if not(__user_canbulkupload(request.user)):
-		raise PermissionDenied
+		return redirect('/auth/?next=/bulk-upload')
 
 	return redirect('plugins/bulk-upload')
 
