@@ -53,8 +53,8 @@ def get_summaries():
 
 	gen = SummaryGenerator()
 
-	grids = get_grid_squares(gen)
-	people = get_people(gen)
+	grid_lookup = get_grid_squares(gen)
+	people_lookup = get_people(gen)
 	country_lookup = get_countries(gen)
 	role_lookup = get_roles(gen)
 
@@ -80,21 +80,61 @@ def get_summaries():
 		kk = str(k)
 		item = sum[kk]
 		if 'Grid' in item:
-			if item['Grid'] in grids:
-				id = item['Grid']
-				item['Grid'] = {"id": id, "label": grids[id]['label']}
+			if isinstance(item['Grid'], str):
+				if item['Grid'] in grid_lookup:
+					id = item['Grid']
+					item['Grid'] = {"id": id, "label": grid_lookup[id]['label']}
+			if isinstance(item['Grid'], list):
+				grids = []
+				for id in list(dict.fromkeys(item['Grid'])):
+					if id in grid_lookup:
+						grids.append({"id": id, "label": grid_lookup[id]['label']})
+				if len(grids) == 1:
+					item['Grid'] = grids[0]
+				else:
+					item['Grid'] = grids
 		if 'Actor' in item:
-			if item['Actor'] in people:
-				id = item['Actor']
-				item['Actor'] = {"id":id, "label": people[id]['label']}
+			if isinstance(item['Actor'], str):
+				if item['Actor'] in people_lookup:
+					id = item['Actor']
+					item['Actor'] = {"id":id, "label": people_lookup[id]['label']}
+			if isinstance(item['Actor'], list):
+				actors = []
+				for id in list(dict.fromkeys(item['Actor'])):
+					if id in people_lookup:
+						actors.append({"id":id, "label": people_lookup[id]['label']})
+				if len(actors) == 1:
+					item['Actor'] = actors[0]
+				else:
+					item['Actor'] = actors
 		if 'Country' in item:
-			if item['Country'] in country_lookup:
-				id = item['Country']
-				item['Country'] = {"id": id, "label": country_lookup[id]['label']}
+			if isinstance(item['Country'], str):
+				if item['Country'] in country_lookup:
+					id = item['Country']
+					item['Country'] = {"id": id, "label": country_lookup[id]['label']}
+			if isinstance(item['Country'], list):
+				countries = []
+				for id in list(dict.fromkeys(item['Country'])):
+					if id in country_lookup:
+						countries.append({"id": id, "label": country_lookup[id]['label']})
+				if len(countries) == 1:
+					item['Country'] = countries[0]
+				else:
+					item['Country'] = countries
 		if 'Role' in item:
-			if item['Role'] in role_lookup:
-				id = item['Role']
-				item['Role'] = {"id": id, "label": role_lookup[id]['label']}
+			if isinstance(item['Role'], str):
+				if item['Role'] in role_lookup:
+					id = item['Role']
+					item['Role'] = {"id": id, "label": role_lookup[id]['label']}
+			if isinstance(item['Role'], list):
+				roles = []
+				for id in list(dict.fromkeys(item['Role'])):
+					if id in role_lookup:
+						roles.append({"id": id, "label": role_lookup[id]['label']})
+				if len(roles) == 1:
+					item['Role'] = roles[0]
+				else:
+					item['Role'] = roles
 		ret[kk] = item
 	return ret
 

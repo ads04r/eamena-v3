@@ -63,7 +63,15 @@ class SummaryGenerator:
 				if isinstance(data, (dict)):
 					if 'resourceId' in data:
 						data = data['resourceId']
-				ret[rid][label] = data
+				if label in ret[rid]:
+					if isinstance(ret[rid][label], list):
+						ret[rid][label].append(data)
+						continue
+					if isinstance(ret[rid][label], str):
+						ret[rid][label] = [ret[rid][label], data]
+						continue
+				else:
+					ret[rid][label] = data
 
 		self._cached_summaries = ret
 		return ret
