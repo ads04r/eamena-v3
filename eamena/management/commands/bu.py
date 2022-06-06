@@ -443,6 +443,14 @@ class Command(BaseCommand):
 					floats = floats + 1
 			if len(gj) == floats:
 				if floats == 2:
+					if gj[1] > 180.0:
+						return False
+					if gj[1] < -90.0:
+						return False
+					if gj[0] > 360.0:
+						return False
+					if gj[0] < -180.0:
+						return False
 					return True
 				else:
 					return False
