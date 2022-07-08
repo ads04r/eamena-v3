@@ -419,7 +419,7 @@ class Command(BaseCommand):
 	def __test_geojson_es(self, gj):
 		if not(self.__test_geojson_recurse(gj)):
 			return False
-		es = Elasticsearch(hosts=['localhost:9200'])
+		es = Elasticsearch()
 		id = self.__make_temp_index(es, 'eamena_resources')
 		doc = {'resourceinstanceid': id, 'geometries': [{'geom': gj}]}
 		try:
@@ -1154,6 +1154,9 @@ class Command(BaseCommand):
 			processed = 0
 			deleted_res = 0
 			deleted_tiles = 0
+			deleted_indices = 0
+
+			es = Elasticsearch()
 			for id in uuids:
 				try:
 					ri = ResourceInstance.objects.get(resourceinstanceid=id)
@@ -1167,9 +1170,16 @@ class Command(BaseCommand):
 					processed = processed + 1
 					deleted_res = deleted_res + delete_report['models.ResourceInstance']
 					deleted_tiles = deleted_tiles + delete_report['models.TileModel']
+					try:
+						index_report = es.delete(index='eamena_resources', id=id)
+					except:
+						index_report = {'result': 'exception'}
+					if 'result' in index_report:
+						if index_report['result'] == 'deleted':
+							deleted_indices = deleted_indices + 1
 
 			if len(uuids) > 0:
-				sys.stderr.write("Resources for Removal: " + str(attempts) + ", Resources Deleted: " + str(deleted_res) + ", Tiles Deleted: " + str(deleted_tiles) + "\n")
+				sys.stderr.write("Resources for Removal: " + str(attempts) + ", Resources Deleted: " + str(deleted_res) + ", Tiles Deleted: " + str(deleted_tiles) + ", Indices deleted: " + str(deleted_indices) + "\n")
 				sys.stderr.write("Resources not found: " + str(len(uuids) - processed) + "\n")
 
 			data = [processed, deleted_res, deleted_tiles]
