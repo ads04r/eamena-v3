@@ -237,6 +237,10 @@ class HeritagePlaceBulkUploadSheet(BulkUploadSheet):
 				m_source = item["MEASUREMENT_SOURCE_TYPE"].strip()
 			measurement = {}
 			if (len(m_num) > 0):
+				try:
+					m_num_float = float(m_num)
+				except:
+					self.error(uniqueid, "Error in Measurements", "'" + str(m_num) + "' is not a valid measurement, a measurement must be a single number with no additional information.")
 				measurement["MEASUREMENT_NUMBER"] = m_num
 			if ((len(m_unit) > 0) & (len(m_dim) > 0) & (len(m_source) > 0)):
 				measurement["MEASUREMENT_UNIT"] = m_unit
@@ -502,8 +506,10 @@ class HeritagePlaceBulkUploadSheet(BulkUploadSheet):
 			if item["GEOMETRIC_PLACE_EXPRESSION"].strip() == '':
 				continue
 			if item["SITE_LOCATION_CERTAINTY"].strip() == '':
+				self.error(uniqueid, "Missing Location Certainty", "Record cannot have a geometry without a location certainty.")
 				continue
 			if item["GEOMETRY_EXTENT_CERTAINTY"].strip() == '':
+				self.error(uniqueid, "Missing Extent Certainty", "Record cannot have a geometry without an extent certainty.")
 				continue
 
 			geom = {}
