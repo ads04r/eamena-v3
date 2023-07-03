@@ -194,7 +194,7 @@ CACHE_BY_USER = {'anonymous': 3600 * 24}
 MOBILE_OAUTH_CLIENT_ID = ''  #'9JCibwrWQ4hwuGn5fu2u1oRZSs9V6gK8Vu8hpRC4'
 MOBILE_DEFAULT_ONLINE_BASEMAP = {'default': 'mapbox://styles/mapbox/streets-v9'}
 
-APP_TITLE = 'Arches | Heritage Data Management'
+APP_TITLE = 'EAMENA'
 COPYRIGHT_TEXT = 'All Rights Reserved.'
 COPYRIGHT_YEAR = '2019'
 
@@ -222,6 +222,21 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 SEARCH_EXPORT_IMMEDIATE_DOWNLOAD_THRESHOLD = 2000  # The maximum number of instances a user can download from search export
+
+
+RESOURCE_FORMATTERS = {
+    "csv": "arches.app.utils.data_management.resources.formats.csvfile.CsvWriter",
+    "json": "arches.app.utils.data_management.resources.formats.archesfile.ArchesFileWriter",
+    "jsonl": "eamena.exporters.JsonLWriter",
+    "tilecsv": "arches.app.utils.data_management.resources.formats.csvfile.TileCsvWriter",
+    "shp": "arches.app.utils.data_management.resources.formats.shpfile.ShpWriter",
+    "xml": "arches.app.utils.data_management.resources.formats.rdffile.RdfWriter",
+    "pretty-xml": "arches.app.utils.data_management.resources.formats.rdffile.RdfWriter",
+    "json-ld": "arches.app.utils.data_management.resources.formats.rdffile.JsonLdWriter",
+    "n3": "arches.app.utils.data_management.resources.formats.rdffile.RdfWriter",
+    "nt": "arches.app.utils.data_management.resources.formats.rdffile.RdfWriter",
+    "trix": "arches.app.utils.data_management.resources.formats.rdffile.RdfWriter",
+}
 
 try:
     from .package_settings import *
